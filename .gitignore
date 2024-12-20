@@ -1,9 +1,10 @@
 @"
 # Ignore large model files
-models/*.pth
-models/*.h5
-models/*.ckpt
+*.pth
+*.h5
+*.ckpt
 *.bin
+models/
 
 # Python
 __pycache__/
@@ -15,4 +16,9 @@ venv_py311/
 new_venv_311/
 .env
 venv/
+
+# Keep important directories
+!data/
+!templates/
+!static/
 "@ | Out-File -FilePath .gitignore -Encoding utf8
