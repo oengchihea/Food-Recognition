@@ -1,0 +1,1 @@
+Simple food recognition model

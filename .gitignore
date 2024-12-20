@@ -1,0 +1,37 @@
+# Create a new .gitignore file
+@"
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Keep all important directories
+!data/
+!data/train/
+!data/val/
+!models/
+!templates/
+!uploads/
+!static/
+
+# Keep all important files
+!*.py
+!*.csv
+!*.txt
+!*.md
+!*.html
+!*.css
+!*.js
+"@ | Out-File -FilePath .gitignore -Encoding utf8

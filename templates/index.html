@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Recognition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Food Recognition</h1>
+            <p class="text-lg text-gray-600">Upload any food image and I'll tell you what it is!</p>
+        </div>
+
+        <div class="bg-white rounded-xlshadow-md overflow-hidden p-8">
+            <form id="uploadForm" class="mb-8">
+                <div class="space-y-4">
+                    <div class="flex justify-center">
+                        <div class="w-full max-w-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Upload a food image</label>
+                            <div id="dropZone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-indigo-500 transition-colors">
+                                <div class="space-y-1 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
+                                            <span>Upload a file</span>
+                                            <input id="file-upload" name="file" type="file" class="sr-only" accept="image/*">
+                                        </label>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                </div>
+                            </div>
+                            <div id="imagePreview" class="mt-4 flex justify-center">
+                                <img id="preview" class="hidden max-w-xs max-h-64 object-contain rounded-lg shadow-lg" alt="Preview">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center">
+                        <button type="submit" id="recognizeBtn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+                            Recognize Food
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="results" class="hidden">
+                <div class="border-t border-gray-200 pt-8">
+                    <div>
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Recognition Result</h2>
+                        <div id="predictions" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="error" class="hidden mt-4 p-4 rounded-md"></div>
+
+            <div id="loading" class="hidden">
+                <div class="flex items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                    <span class="ml-2 text-gray-600">Processing image...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('file-upload');
+        const preview = document.getElementById('preview');
+        const results = document.getElementById('results');
+        const predictions = document.getElementById('predictions');
+        const error = document.getElementById('error');
+        const loading = document.getElementById('loading');
+        const dropZone = document.getElementById('dropZone');
+
+        function showError(message) {
+            error.textContent = message;
+            error.classList.remove('hidden');
+            error.classList.add('bg-red-50', 'text-red-700', 'p-4', 'rounded-md');
+        }
+
+        function clearResults() {
+            error.classList.add('hidden');
+            results.classList.add('hidden');
+            predictions.innerHTML = '';
+        }
+
+        function handleFile(file) {
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+                clearResults();
+            }
+        }
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-500');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = e.dataTransfer.files;
+                handleFile(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fileInput.files.length) {
+                showError('Please select a file');
+                return;
+            }
+
+            const formData = new FormData(form);
+            loading.classList.remove('hidden');
+            clearResults();
+
+            try {
+                const response = await fetch('/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    showError(data.error);
+                } else if (data.success) {
+                    const pred = data.predictions[0]; // Get only the first prediction
+                    predictions.innerHTML = `
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium text-gray-900">${pred.label}</span>
+                                <span class="text-sm text-gray-600">${pred.confidence.toFixed(2)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-indigo-600 h-2 rounded-full" style="width: ${pred.confidence}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    results.classList.remove('hidden');
+                }
+            } catch (err) {
+                showError('An error occurred while processing the image');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
