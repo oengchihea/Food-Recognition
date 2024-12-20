@@ -1,37 +1,18 @@
-# Create a new .gitignore file
 @"
+# Ignore large model files
+models/*.pth
+models/*.h5
+models/*.ckpt
+*.bin
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
-
-# Virtual Environment
+# Virtual environments
+venv_py311/
+new_venv_311/
 .env
-.venv
-env/
 venv/
-ENV/
-
-# Keep all important directories
-!data/
-!data/train/
-!data/val/
-!models/
-!templates/
-!uploads/
-!static/
-
-# Keep all important files
-!*.py
-!*.csv
-!*.txt
-!*.md
-!*.html
-!*.css
-!*.js
 "@ | Out-File -FilePath .gitignore -Encoding utf8
